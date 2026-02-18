@@ -1,0 +1,17 @@
+{
+  "name": "l2l_mailer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "cheshiretail",
+  "license": "MIT",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "nodemailer": "^8.0.0"
+  }
+}
