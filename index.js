@@ -63,7 +63,7 @@ app.post("/api/contact", async (req, res) => {
   try {
     const raw = buildMessage({
       from: `"Site form" <${process.env.MAIL_USER}>`,
-      to: "posad_92@mail.ru",
+      to: "sf92@yandex.ru",
       subject: "Новая заявка с сайта",
       body: `Имя: ${name}\nТелефон: ${phone}\nКомментарий: ${comment || "—"}`,
     });
