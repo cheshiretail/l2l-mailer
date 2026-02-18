@@ -1,9 +1,13 @@
-import express from "express";
 import cors from "cors";
+import express from "express";
 import nodemailer from "nodemailer";
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://l2l-cheshiretail.ru", "https://www.l2l-cheshiretail.ru"],
+  })
+);
 app.use(express.json());
 
 const transporter = nodemailer.createTransport({
