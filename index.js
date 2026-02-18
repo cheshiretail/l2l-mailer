@@ -19,14 +19,14 @@ const transporter = nodemailer.createTransport({
 });
 
 app.post("/api/contact", async (req, res) => {
-  const { name, email, message } = req.body;
+  const { name, phone, comment } = req.body;
 
   try {
     await transporter.sendMail({
       from: `"Site form" <${process.env.MAIL_USER}>`,
-      to: "posad_92@mail.ru", // куда получать письма
-      subject: "Новое сообщение с формы",
-      text: `Имя: ${name}\nEmail: ${email}\nСообщение: ${message}`,
+      to: "posad_92@mail.ru",
+      subject: "Новая заявка с сайта",
+      text: `Имя: ${name}\nТелефон: ${phone}\nКомментарий: ${comment || "—"}`,
     });
 
     res.json({ ok: true });
