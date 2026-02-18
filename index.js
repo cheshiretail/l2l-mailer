@@ -5,7 +5,7 @@ import nodemailer from "nodemailer";
 const app = express();
 app.use(
   cors({
-    origin: ["https://l2l-cheshiretail.ru", "https://www.l2l-cheshiretail.ru"],
+    origin: ["https://l2l-union.cheshiretail.ru", "https://www.l2l-union.cheshiretail.ru"],
   })
 );
 app.use(express.json());
