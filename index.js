@@ -1,6 +1,5 @@
 import cors from "cors";
 import express from "express";
-import nodemailer from "nodemailer";
 import { google } from "googleapis";
 
 const app = express();
@@ -25,34 +24,30 @@ oAuth2Client.setCredentials({
   refresh_token: process.env.REFRESH_TOKEN,
 });
 
-// Фабрика транспортера, чтобы всегда иметь актуальный access_token
-async function createTransporter() {
-  const { token: accessToken } = await oAuth2Client.getAccessToken();
+const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      type: "OAuth2",
-      user: process.env.MAIL_USER,
-      clientId: process.env.CLIENT_ID,
-      clientSecret: process.env.CLIENT_SECRET,
-      refreshToken: process.env.REFRESH_TOKEN,
-      accessToken,
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-  });
+// Собираем RFC 2822 письмо и кодируем в base64url
+function buildMessage({ from, to, subject, body }) {
+  const lines = [
+    `From: ${from}`,
+    `To: ${to}`,
+    `Subject: =?UTF-8?B?${Buffer.from(subject).toString("base64")}?=`,
+    `MIME-Version: 1.0`,
+    `Content-Type: text/plain; charset=UTF-8`,
+    ``,
+    body,
+  ];
+  const raw = lines.join("\r\n");
+  return Buffer.from(raw).toString("base64url");
 }
 
-// Проверяем подключение при старте
+// Проверяем OAuth2 токен при старте
 (async () => {
   try {
-    const transporter = await createTransporter();
-    await transporter.verify();
-    console.log("✓ SMTP OAuth2 connection verified");
+    const { token } = await oAuth2Client.getAccessToken();
+    console.log("✓ Gmail OAuth2 token obtained:", !!token);
   } catch (err) {
-    console.error("✗ SMTP OAuth2 connection failed:", err.message);
+    console.error("✗ Gmail OAuth2 token failed:", err.message);
   }
 })();
 
@@ -66,14 +61,17 @@ app.post("/api/contact", async (req, res) => {
   console.log("  REFRESH_TOKEN set:", !!process.env.REFRESH_TOKEN);
 
   try {
-    const transporter = await createTransporter();
-
-    console.log("  Sending email...");
-    await transporter.sendMail({
+    const raw = buildMessage({
       from: `"Site form" <${process.env.MAIL_USER}>`,
       to: "posad_92@mail.ru",
       subject: "Новая заявка с сайта",
-      text: `Имя: ${name}\nТелефон: ${phone}\nКомментарий: ${comment || "—"}`,
+      body: `Имя: ${name}\nТелефон: ${phone}\nКомментарий: ${comment || "—"}`,
+    });
+
+    console.log("  Sending email via Gmail API...");
+    await gmail.users.messages.send({
+      userId: "me",
+      requestBody: { raw },
     });
 
     console.log("  ✓ Email sent successfully");
