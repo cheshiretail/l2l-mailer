@@ -51,14 +51,27 @@ function buildMessage({ from, to, subject, body }) {
   }
 })();
 
+const MIN_SUBMIT_TIME_MS = 3000; // минимум 3 сек между маунтом формы и отправкой
+
 app.post("/api/contact", async (req, res) => {
-  const { name, phone, comment } = req.body;
+  const { name, phone, comment, terms, _t } = req.body;
 
   console.log("→ Incoming request /api/contact");
   console.log("  Body:", JSON.stringify({ name, phone, comment }));
-  console.log("  MAIL_USER set:", !!process.env.MAIL_USER);
-  console.log("  CLIENT_ID set:", !!process.env.CLIENT_ID);
-  console.log("  REFRESH_TOKEN set:", !!process.env.REFRESH_TOKEN);
+  console.log("  Honeypot (terms):", JSON.stringify(terms));
+  console.log("  Time on page (ms):", _t);
+
+  // Honeypot: если бот заполнил скрытое поле — тихо отбиваем
+  if (terms) {
+    console.log("  ⚠ Bot detected (honeypot filled), rejecting silently");
+    return res.json({ ok: true }); // 200 чтобы бот думал, что успешно
+  }
+
+  // Time-check: если форма отправлена слишком быстро — бот
+  if (typeof _t !== "number" || _t < MIN_SUBMIT_TIME_MS) {
+    console.log("  ⚠ Bot detected (submitted too fast), rejecting silently");
+    return res.json({ ok: true });
+  }
 
   try {
     const raw = buildMessage({
